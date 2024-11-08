@@ -1,4 +1,5 @@
 let cloudImage;
+let bgImage;
 let birdMask;
 
 let xOffset = 0; // Horizontal offset for movement
@@ -10,8 +11,14 @@ let flapSpeed = 0.1; // Speed of flapping animation
 let flyHeight = 0; // Variable to control bird's flying height
 let flyingState = '';
 
+// Array to hold all particles (olive branches)
+let particles = [];
+// Number of particles to generate
+const particleCount = 100;
+
 function preload() {
   cloudImage = loadImage('./images/clouds.jpg'); // Load the cloud image
+  bgImage = loadImage('./images/bg.jpg'); // Load the cloud image
 }
 
 function setup() {
@@ -22,10 +29,22 @@ function setup() {
 
   drawDove(birdMask); // Draw the bird shape on the mask
   cloudImage.mask(birdMask); // Apply the bird shape as a mask on the cloud image
+
+  // Initialize particles and add them to the particles array
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new OliveBranch(random(width), random(height)));
+  }
 }
 
   function draw() {
     background(0, 100, 200); // Set background color
+    image(bgImage, 0, 0, width, height);
+
+    // Loop through each particle to update and display it
+    for (let particle of particles) {
+      particle.update(); // Update particle position and interactions
+      particle.display(); // Draw particle on canvas
+    }
 
     // Update position based on arrow keys for smooth movement
   if (keyIsDown(LEFT_ARROW)) {
@@ -114,4 +133,70 @@ function setup() {
     flyingState = 'takeUp';
   }
 
+
+  // Define the OliveBranch class to represent each particle
+  class OliveBranch {
+    constructor(x, y) {
+      // Particle's position, set to initial x and y coordinates
+      this.x = x;
+      this.y = y;
+      // Particle's velocity, using random small values for x and y direction
+      this.vx = random(-0.5, 0.5); // Horizontal velocity
+      this.vy = random(-0.5, 0.5); // Vertical velocity
+      // Particle's size, randomly chosen to vary particle dimensions
+      this.size = random(8, 15); // Random size for olive branch shape
+      // Particle's rotation angle, randomized for natural look
+      this.angle = random(TWO_PI);
+    }
+
+    // Update particle's position and handle mouse interaction
+    update() {
+      // Calculate the distance between the particle and the mouse
+      let dx = mouseX - this.x;
+      let dy = mouseY - this.y;
+      let distance = sqrt(dx * dx + dy * dy);
+
+      // Check if particle is within a certain distance from the mouse
+      if (distance < 100) {
+        // Calculate the angle between particle and mouse to "push" away
+        let angle = atan2(dy, dx);
+        // Generate a push force based on the distance from the mouse
+        let pushX = cos(angle) * map(distance, 0, 100, 5, 0);
+        let pushY = sin(angle) * map(distance, 0, 100, 5, 0);
+        // Apply the push force to the particle's position
+        this.x -= pushX;
+        this.y -= pushY;
+      }
+
+      // Apply natural movement by adding velocity to position
+      this.x += this.vx;
+      this.y += this.vy;
+
+      // Boundary detection: reverse velocity if particle hits canvas edges
+      if (this.x > width || this.x < 0) this.vx *= -1;
+      if (this.y > height || this.y < 0) this.vy *= -1;
+    }
+
+    // Display the particle as an olive branch shape on the canvas
+    display() {
+      // Save the current drawing state
+      push();
+      // Move to the particle's position
+      translate(this.x, this.y);
+      // Rotate the particle by its angle for a natural orientation
+      rotate(this.angle);
+      // Set the color for the olive branch (olive green)
+      fill(107, 142, 35);
+      noStroke(); // Remove outline for a smooth look
+      // Draw an ellipse representing the olive branch shape
+      ellipse(0, 0, this.size * 2, this.size);
+      // Restore the original drawing state
+      pop();
+    }
+  }
+
+  // Adjust the canvas size dynamically if the window is resized
+  function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+  }
 
