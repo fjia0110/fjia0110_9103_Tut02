@@ -6,14 +6,16 @@ let yOffset = 0; // Vertical offset for movement
 let speed = 3; // Movement speed
 
 let wingFlap = 0; // Variable to control wing position
-let flapSpeed = 0.2; // Speed of flapping animation
+let flapSpeed = 0.1; // Speed of flapping animation
+let flyHeight = 0; // Variable to control bird's flying height
+let flyingState = '';
 
 function preload() {
   cloudImage = loadImage('./images/clouds.jpg'); // Load the cloud image
 }
 
 function setup() {
-    createCanvas(innerWidth, innerHeight);
+  createCanvas(innerWidth, innerHeight);
 
   // Create a graphics object to draw the bird shape for masking
   birdMask = createGraphics(500, 400);
@@ -40,14 +42,33 @@ function setup() {
   }
 
    // Update wing position for flapping effect
+   if (flapSpeed > 0.1) {
+    flapSpeed -= 0.008; // Slow down flapping speed
+   }
+
    wingFlap += flapSpeed;
    if (wingFlap > 1 || wingFlap < -1) {
      flapSpeed *= -1; // Reverse direction to create flapping effect
    }
 
+   // Update flying height based on space bar press
+   if (flyingState === 'takeUp') {
+    flyHeight -= 5;
+    if (flyHeight <= height / 2 - 400) {
+      flyingState = 'takeDown';
+    }
+   } else if (flyingState === 'takeDown') {
+    flyHeight += 5;
+    if (flyHeight >= height / 2 - 200) {
+      flyingState = ''; // Reset flying state when bird reaches the desired height
+    }
+   }
+
+   const moveHeight = flyingState ? height / 2 - 200 - flyHeight : 0; // Calculate the vertical movement based on the flying state
 
     // Clear and redraw the bird mask with updated wing position
     birdMask.clear(); // Clear previous drawing on birdMask
+    translate(width / 2 - 200, height / 2 - 200 - moveHeight); // Move origin to center of the graphics object
     drawDove(birdMask); // Redraw bird with updated wing position
 
     // Apply the bird shape mask to the cloud image
@@ -59,7 +80,6 @@ function setup() {
   }
 
   function drawDove(pg) {
-    const a = frameCount % 20 === 0 ? 50 : 0;
     pg.fill(255); // Fill white for the mask
 
     pg.noStroke();
@@ -86,6 +106,12 @@ function setup() {
 
     pg.endShape(CLOSE);
 
+  }
+
+  function mouseClicked() {
+    flapSpeed = 0.5;
+    flyHeight = height / 2 - 200
+    flyingState = 'takeUp';
   }
 
 
